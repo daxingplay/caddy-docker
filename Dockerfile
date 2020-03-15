@@ -4,24 +4,32 @@
 FROM abiosoft/caddy:builder as builder
 
 ARG version="1.0.0"
-ARG plugins="git,tls.dns.dnspod,cors,realip,expires,cache"
+ARG plugins="git,cloudflare,dnspod,cors,realip,expires,cache"
+ARG enable_telemetry="false"
 
 # process wrapper
 RUN go get -v github.com/abiosoft/parent
 
-RUN VERSION=${version} PLUGINS=${plugins} /bin/sh /usr/bin/builder.sh
+RUN VERSION=${version} PLUGINS=${plugins} ENABLE_TELEMETRY=${enable_telemetry} /bin/sh /usr/bin/builder.sh
 
 #
 # Final stage
 #
-FROM alpine:3.8
+FROM alpine:3.10
 LABEL maintainer "Abiola Ibrahim <abiola89@gmail.com>"
 
-ARG version="1.0.0"
+ARG version="1.0.3"
 LABEL caddy_version="$version"
 
+# PHP www-user UID and GID
+ARG PUID="1000"
+ARG PGID="1000"
+
 # Let's Encrypt Agreement
-ENV ACME_AGREE="false"
+ENV ACME_AGREE="true"
+
+# Telemetry Stats
+ENV ENABLE_TELEMETRY="$enable_telemetry"
 
 RUN apk add --no-cache openssh-client git
 
